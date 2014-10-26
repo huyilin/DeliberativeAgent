@@ -76,18 +76,26 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
-		
+		State goalState = constructGoal(tasks);
 		/* Initialize the state */
-		State state = new State(current, tasks);
+		State state = new State(vehicle, tasks);
+		iterate(vehicle, state);
 		return plan;
 	}
 	
-	private void iterate(State state) {
+	
+	private void constructGoal(TaskSet tasks) {
+		for (Task task : tasks) {
+		 // to construct the goal state	
+		}
+	}
+	
+	private void iterate(Vehicle vehicle, State state) {
 		
 		
 		if(state.identical(goalState) {
 			return plan;
-		}	
+		}
 	}
 
 	@Override

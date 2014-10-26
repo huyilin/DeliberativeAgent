@@ -13,19 +13,19 @@ import java.util.ArrayList;
 
 public class State {
 	
-	private City currentCity;
+	private Vehicle vehicle;
 	private ArrayList<City> packLocation = new ArrayList<City> ();
 	private TaskSet tasks;
 	
-	public State(ArrayList<City> packLocation) {
+	public State(Vehicle vehicle, ArrayList<City> packLocation) {
 		this.packLocation = packLocation;
 	};
 	
 	
 	/*overload, this is used to create a new initial state*/		
-	public State(City initialCity, TaskSet tasks) {
+	public State(Vehicle vehicle, TaskSet tasks) {
 
-		currentCity = initialCity;
+		this.vehicle = vehicle;
 
 		/*Initialize the arrayList to store the location*/
 		for (int i=0; i < tasks.size(); i++) {
@@ -39,9 +39,9 @@ public class State {
 	}
 	
 	public State move(City city) {
-		State state = new State(this.packLocation);
-		state.currentCity = city;
 		
+		State state = new State(vehicle, this.packLocation);
+		 = city;
 		
 		return State
 	}
