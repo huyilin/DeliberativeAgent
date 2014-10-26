@@ -11,6 +11,7 @@ import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
 
+
 /**
  * An optimal planner for one vehicle.
  */
@@ -44,6 +45,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 		
 		// ...
+		
 	}
 	
 	@Override
@@ -58,7 +60,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			break;
 		case BFS:
 			// ...
-			plan = naivePlan(vehicle, tasks);
+			plan = bfsPlan(vehicle, tasks);
 			break;
 		default:
 			throw new AssertionError("Should not happen.");
@@ -67,16 +69,22 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 	
 	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
+		return null;
+	
+	}
+	
+	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
+		
+		
 		
 		for (Task task : tasks) {
 			// move: current city => pickup location
 			for (City city : current.pathTo(task.pickupCity))
 				plan.appendMove(city);
-
 			plan.appendPickup(task);
-
+				
 			// move: pickup location => delivery location
 			for (City city : task.path())
 				plan.appendMove(city);
@@ -86,7 +94,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			// set current city
 			current = task.deliveryCity;
 		}
-		return plan; 
+		return plan;
 	}
 
 	@Override
