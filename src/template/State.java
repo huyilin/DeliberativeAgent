@@ -54,4 +54,18 @@ public class State {
 			
 			
 	}
+	
+	public boolean identical(State s){
+		boolean result = false;
+		int count = 0;
+		for (int i = 0; i < 6; i++){
+			if (this.packLocation.get(i) == s.packLocation.get(i))
+				count ++;
+		}
+		if (count == 6){
+			result = true;
+		}
+		
+		return result;
+	}
 }
