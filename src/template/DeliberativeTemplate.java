@@ -77,24 +77,17 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
 		
-		
-		
-		for (Task task : tasks) {
-			// move: current city => pickup location
-			for (City city : current.pathTo(task.pickupCity))
-				plan.appendMove(city);
-			plan.appendPickup(task);
-				
-			// move: pickup location => delivery location
-			for (City city : task.path())
-				plan.appendMove(city);
-
-			plan.appendDelivery(task);
-
-			// set current city
-			current = task.deliveryCity;
-		}
+		/* Initialize the state */
+		State state = new State(current, tasks);
 		return plan;
+	}
+	
+	private void iterate(State state) {
+		
+		
+		if(state.identical(goalState) {
+			return plan;
+		}	
 	}
 
 	@Override
