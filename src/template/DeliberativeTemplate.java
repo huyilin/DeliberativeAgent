@@ -100,26 +100,21 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		stateQueue.add(initalState);
 		State optimalState = null;
 		
-		for(City city : topology.cities()) {
+		for(City city : topology.cities()) {			// map pickup and delivery cities to null tasks 
 			pickupMap.put(city, new HashSet<Task>());
 			deliveryMap.put(city, new HashSet<Task> ());
 		}
 		
-		for(Task task : tasks) {
+		for(Task task : tasks) { 				// add task to its origin city and destination city 
 			pickupMap.get(task.pickupCity).add(task);
-			pickupMap.get(task.deliveryCity).add(task);
+			deliveryMap.get(task.deliveryCity).add(task);
 		}
 		
 		while(!stateQueue.isEmpty()) {
-			State state = stateQueue.remove();
-			if(state.deliveredTasks.size() == tasks.size() && state.cost < optimalState.cost) {
+			State state = stateQueue.remove();		// dequeue the head 
+			if(state.deliveredTasks.size() == tasks.size() && state.cost < optimalState.cost) {    // reaching goal state and cost less than optimal state 
 				optimalState = state;
 			}
-			
-			System.out.println("Here");
-			System.out.println("Here");
-			System.out.println("Here");
-			System.out.println("Here");
 			
 			for(State nextState: this.nextStates(state)) {
 				stateQueue.add(nextState);
@@ -144,7 +139,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private HashSet<State> nextStates(State state) {
 		
 		HashSet<State> nextStates = new HashSet<State> ();
-		
+		// record the package in current city
 		HashSet<Task> currentTasks = pickupMap.get(state.currentCity);
 		
 		/* To record how many packages to delivery, with their destination*/
