@@ -119,16 +119,13 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				if (!firstHit) {
 					optimalState = state;
 					firstHit = true;
-					System.out.println("First Hittttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt");
 				} else if (state.cost < optimalState.cost) {
 					optimalState = state;
-					System.out.println(state.cost);
 				}
 			} else {
 				for (State nextState: this.nextStates(state)) {
 					if (!firstHit  || state.cost < optimalState.cost) {
 						if (!hasCircle(nextState)) {
-//							System.out.println(nextState.deliveredTasks);
 							stateQueue.add(nextState);
 						}
 					}
