@@ -157,9 +157,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 //			if(state.deliveredTasks.contains(id) || state.carriedTasks.contains(id))
 //				iterator.remove();
 //		}
-		
-		System.out.println(currentTasks);
-		
+				
 		if(currentTasks!=null) {
 //			int available = min(currentTasks.size(), capacity - state.carriedTasks.size());
 			for(Task task : currentTasks) {
@@ -189,7 +187,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			nextStates.add(newMove(neighbor, state));
 		}
 		
-		return null;
+		return nextStates;
 	}
 	
 	
