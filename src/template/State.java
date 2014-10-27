@@ -14,5 +14,5 @@ public class State {
 	public	HashSet<Integer> carriedTasks = new HashSet<Integer>();
 	public HashSet<Integer> deliveredTasks = new HashSet<Integer> ();
 	public Plan plan;
-	ArrayList<Integer> pathControl = new ArrayList<Integer> ();
+//	ArrayList<Integer> pathControl = new ArrayList<Integer> ();
 }
