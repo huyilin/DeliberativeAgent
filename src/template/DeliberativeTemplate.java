@@ -33,6 +33,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	/* Environment */
 	Topology topology;
 	TaskDistribution td;
+	int cityNum;
 	
 	/* the properties of the agent */
 	Agent agent;
@@ -52,6 +53,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		this.td = td;
 		this.agent = agent;
 		this.carriedTasks = null;
+		this.cityNum = topology.cities().size();
 	
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
@@ -110,32 +112,50 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			deliveryMap.get(task.deliveryCity).add(task);
 		}
 		
-		while(!stateQueue.isEmpty()) {
-			
-			
+		while (!stateQueue.isEmpty()) {
 			State state = stateQueue.remove();
 			
-			if(state.deliveredTasks.size() == tasks.size()) {
-
-				if(!firstHit) {
+			if (state.deliveredTasks.size() == tasks.size()) {
+				if (!firstHit) {
 					optimalState = state;
 					firstHit = true;
-					System.out.println("First HIttingggggggggggggggggggggggggggggggggggggg");
-				}
-	
-				if(state.cost < optimalState.cost) {
+					System.out.println("First Hittttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt");
+				} else if (state.cost < optimalState.cost) {
 					optimalState = state;
+					System.out.println(state.cost);
 				}
-				
 			} else {
-				for(State nextState: this.nextStates(state)) {
-					if(!firstHit  || state.cost < optimalState.cost) {
-						stateQueue.add(nextState);
-					} 
+				for (State nextState: this.nextStates(state)) {
+					if (!firstHit  || state.cost < optimalState.cost) {
+						if (!hasCircle(nextState)) {
+//							System.out.println(nextState.deliveredTasks);
+							stateQueue.add(nextState);
+						}
+					}
 				}
 			}
 		}
+		System.out.println("Return Optimal");
+		System.out.println(optimalState.cost);
+		System.out.println(optimalState.plan);
 		return optimalState.plan;
+	}
+	
+	private boolean hasCircle(State state) {
+		ArrayList<Integer> path = state.pathControl;
+		if(path.size() < 2) {
+			return false;
+		}
+		int tail = path.get(path.size() -1);
+		if(tail ==  cityNum) return false;		
+		for(int i = path.size() -2; i>= 0; i--) {
+			if(path.get(i) == cityNum) {
+				return false;
+			} else{
+				if(path.get(i) == tail) return true;
+			} 	
+		}		
+		return false;
 	}
 	
 	private State initiateState (Vehicle vehicle, TaskSet tasks, Plan plan) {
@@ -144,74 +164,61 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		state.currentCity = vehicle.getCurrentCity();
 		state.capacity = vehicle.capacity();
 		state.cost = 0;
+		state.pathControl.add(InitialCity.id);
 		return state;
-	}
-	
-	private int min(int i, int j) {
-		if (i >= j) return j;
-		else return i;
 	}
 	
 	private HashSet<State> nextStates(State state) {
 		
-		HashSet<State> nextStates = new HashSet<State> ();
-		
-		HashSet<Task> currentTasks = pickupMap.get(state.currentCity);
+		HashSet<State> nextStates = new HashSet<State> ();	
 		
 		/* To record how many packages to delivery, with their destination*/
 		HashSet<Task> currentDelivery = deliveryMap.get(state.currentCity);
+		for(Task task : currentDelivery) {
+			if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id)) {
+			/* decide to deliver this package*/
+				nextStates.add(newDeliver(task, state));
+			}
+		}
 		
-//		Iterator<Task> iterator = currentTasks.iterator();
+		if(nextStates.size() > 0) {
+			return nextStates;
+		}
 		
-//		while (iterator.hasNext()) {
-//			int id = iterator.next().id;
-//			if(state.deliveredTasks.contains(id) || state.carriedTasks.contains(id))
-//				iterator.remove();
-//		}
-				
-		if(currentTasks!=null) {
-//			int available = min(currentTasks.size(), capacity - state.carriedTasks.size());
-			for(Task task : currentTasks) {
-//				for(int toTake = 1; toTake <= available; toTake++) {
-//					nextStates.addAll(newTake(currentTasks, toTake, state));
-//				}
-				/*the for loop runs only one time, which means only one decision was made at one time */
+		for(City city : topology.cities()) {
+			HashSet<Task> cityTasks = pickupMap.get(city);
+			HashSet<Task> cityDelivery = deliveryMap.get(city);
+			
+			if(state.currentCity.id != city.id) {
+				for(Task task : cityDelivery) {
+					if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id)) {
+						/* decide to deliver this package*/
+						State state1 = newMove(city, state);
+						nextStates.add(newDeliver(task, state1));
+					}
+				}
+			}
+			
+			for(Task task : cityTasks) {
 				if(state.capacity > task.weight) {
 					if(!state.deliveredTasks.contains(task.id) && !state.carriedTasks.contains(task.id)) {
-						nextStates.add(newTake(task, state));
-						break;
+						State state2 = newMove(city, state);
+						nextStates.add(newTake(task, state2));
 					}
 				}
 			}
 		}
-		
-		
-		if(currentDelivery != null) {
-				for(Task task : currentDelivery) {
-					if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id)) {
-					/* decide to deliver this pakage*/
-						nextStates.add(newDeliver(task, state));
-						break;
-					}
-				}
-		}
-		
-		for(City neighbor : state.currentCity.neighbors()) {
-			nextStates.add(newMove(neighbor, state));
-		}
 		return nextStates;
 	}
-		
-	
 	
 	State newTake(Task task, State state) {
 		State returnState = copyState(state);
 		returnState.plan.appendPickup(task);
 		returnState.carriedTasks.add(task.id);
 		returnState.capacity -= task.weight;
+		returnState.pathControl.add(cityNum);
 		return returnState;
 	}
-	
 	
 	State newDeliver (Task task, State state) {
 		State returnState = copyState(state);
@@ -219,15 +226,20 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		returnState.carriedTasks.remove(task.id);
 		returnState.deliveredTasks.add(task.id);
 		returnState.capacity += task.weight;
-		System.out.println(returnState.deliveredTasks.size());
+		returnState.pathControl.add(cityNum);
 		return returnState;
 	}
 	
-	State newMove (City neighbor, State state) {
+	State newMove (City city, State state) {
 		State returnState = copyState(state);
-		returnState.currentCity = neighbor;
-		returnState.plan.appendMove(neighbor);
-		returnState.cost += state.currentCity.distanceUnitsTo(neighbor)*vehicle.costPerKm();
+		
+		for(City paseCity : returnState.currentCity.pathTo(city)) {
+			returnState.plan.appendMove(paseCity);
+		}
+		
+		returnState.cost += state.currentCity.distanceUnitsTo(city)*vehicle.costPerKm();
+		returnState.pathControl.add(city.id);
+		returnState.currentCity = city;
 		return returnState;
 	}
 	
@@ -241,6 +253,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		Plan plan = new Plan(InitialCity);
 		
+		for(int i : state.pathControl) {
+			returnState.pathControl.add(i);
+		}
 		
 		for(int taskID : state.carriedTasks) {
 			returnState.carriedTasks.add(taskID);
@@ -260,49 +275,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		return returnState;
 	}
 	
-//	HashSet<State> newTake(HashSet<Task> currentTasks, int toTake,
-//			State prestate) {
-//		HashSet<State> returnStates = new HashSet<State> (); 
-//		if( toTake == 1) {
-//			for(Task task : currentTasks) {
-//				State state = new State();
-//				state = prestate;
-//				state.carriedTasks.add(task.id);
-//				state.plan.appendPickup(task);
-//				returnStates.add(state);
-//			}
-//		} else {
-//			for(Task task : currentTasks) {
-//				State state = new State();
-//				state.carriedTasks.add(task.id);
-//				state.plan.appendPickup(task);
-//				HashSet<Task> deductTasks = new HashSet<Task> ();
-//				deductTasks = currentTasks;
-//				deductTasks.remove(task);
-//				returnStates.addAll(newTake(deductTasks));
-//				
-//			}
-//			state = new state(
-//		}
-//		
-//		State returnState = new State();
-//		
-//		returnState = state;
-//		for(Task task : currentTList) {
-//			if(taked.size() == toTake) {
-//				return taked;
-//			}
-//			
-//			if(!taked.contains(task.id) && taked.size() < toTake) {
-//				state.add(task.id);
-//				toTake --;
-//				return newTake(currentTasks, toTake, taked);
-//			}
-//		}
-//		
-//		return null;
-//	}
-
 	@Override
 	public void planCancelled(TaskSet carriedTasks) {
 		if (!carriedTasks.isEmpty()) {
