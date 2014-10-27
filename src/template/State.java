@@ -9,13 +9,16 @@ import logist.task.TaskDistribution;
 import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class State {
-	Plan plan;
-	public boolean ifFull = false;
-	public int currentCity;
-	public	ArrayList<Integer>	carriedTasks = new ArrayList<Integer>();
-	public ArrayList<Integer> deliveredTasks = new ArrayList<Integer> ();
 	
+	int capacity;
+	long cost;
+	public City currentCity;
+	public	HashSet<Integer>	carriedTasks = new HashSet<Integer>();
+	public HashSet<Integer> deliveredTasks = new HashSet<Integer> ();
+	public Plan plan;
 }
