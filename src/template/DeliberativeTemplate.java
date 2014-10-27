@@ -98,6 +98,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		State initalState = initiateState(vehicle, tasks, plan);
 		stateQueue.add(initalState);
 		State optimalState = null;
+		boolean firstHit = false;
 		
 		for(City city : topology.cities()) {
 			pickupMap.put(city, new HashSet<Task>());
@@ -110,16 +111,27 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		}
 		
 		while(!stateQueue.isEmpty()) {
+			
+			
 			State state = stateQueue.remove();
 			
 			if(state.deliveredTasks.size() == tasks.size()) {
+
+				if(!firstHit) {
+					optimalState = state;
+					firstHit = true;
+					System.out.println("First HIttingggggggggggggggggggggggggggggggggggggg");
+				}
+	
 				if(state.cost < optimalState.cost) {
 					optimalState = state;
 				}
+				
 			} else {
 				for(State nextState: this.nextStates(state)) {
-					stateQueue.add(nextState);
-					System.out.println(nextState.deliveredTasks.size());
+					if(!firstHit  || state.cost < optimalState.cost) {
+						stateQueue.add(nextState);
+					} 
 				}
 			}
 		}
@@ -165,29 +177,31 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 //				}
 				/*the for loop runs only one time, which means only one decision was made at one time */
 				if(state.capacity > task.weight) {
-					if(!state.deliveredTasks.contains(task.id) && !state.carriedTasks.contains(task.id));
-					nextStates.add(newTake(task, state));
-					break;
+					if(!state.deliveredTasks.contains(task.id) && !state.carriedTasks.contains(task.id)) {
+						nextStates.add(newTake(task, state));
+						break;
+					}
 				}
 			}
 		}
 		
+		
 		if(currentDelivery != null) {
 				for(Task task : currentDelivery) {
-					if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id))
+					if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id)) {
 					/* decide to deliver this pakage*/
-					nextStates.add(newDeliver(task, state));
-					break;
+						nextStates.add(newDeliver(task, state));
+						break;
+					}
 				}
 		}
-		
 		
 		for(City neighbor : state.currentCity.neighbors()) {
 			nextStates.add(newMove(neighbor, state));
 		}
-		
 		return nextStates;
 	}
+		
 	
 	
 	State newTake(Task task, State state) {
@@ -200,12 +214,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	
 	State newDeliver (Task task, State state) {
-		System.out.println("delivery");
 		State returnState = copyState(state);
 		returnState.plan.appendDelivery(task);
 		returnState.carriedTasks.remove(task.id);
 		returnState.deliveredTasks.add(task.id);
 		returnState.capacity += task.weight;
+		System.out.println(returnState.deliveredTasks.size());
 		return returnState;
 	}
 	
@@ -244,7 +258,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		}
 		returnState.plan = plan;
 		return returnState;
-
 	}
 	
 //	HashSet<State> newTake(HashSet<Task> currentTasks, int toTake,
