@@ -90,7 +90,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		
-		
 		Queue<State> stateQueue = new LinkedList<State> ();
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
@@ -107,22 +106,21 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		for(Task task : tasks) {
 			pickupMap.get(task.pickupCity).add(task);
-			pickupMap.get(task.deliveryCity).add(task);
+			deliveryMap.get(task.deliveryCity).add(task);
 		}
 		
 		while(!stateQueue.isEmpty()) {
 			State state = stateQueue.remove();
-			if(state.deliveredTasks.size() == tasks.size() && state.cost < optimalState.cost) {
-				optimalState = state;
-			}
 			
-			System.out.println("Here");
-			System.out.println("Here");
-			System.out.println("Here");
-			System.out.println("Here");
-			
-			for(State nextState: this.nextStates(state)) {
-				stateQueue.add(nextState);
+			if(state.deliveredTasks.size() == tasks.size()) {
+				if(state.cost < optimalState.cost) {
+					optimalState = state;
+				}
+			} else {
+				for(State nextState: this.nextStates(state)) {
+					stateQueue.add(nextState);
+					System.out.println(nextState.deliveredTasks.size());
+				}
 			}
 		}
 		return optimalState.plan;
@@ -133,6 +131,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		state.plan = plan;
 		state.currentCity = vehicle.getCurrentCity();
 		state.capacity = vehicle.capacity();
+		state.cost = 0;
 		return state;
 	}
 	
@@ -168,20 +167,20 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				if(state.capacity > task.weight) {
 					if(!state.deliveredTasks.contains(task.id) && !state.carriedTasks.contains(task.id));
 					nextStates.add(newTake(task, state));
-					currentTasks.remove(task);
 					break;
 				}
 			}
 		}
 		
-		if(state.carriedTasks.size() > 0 && currentDelivery.size() > 0 ) {
-			for(Task task : currentDelivery) {
-				if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id))
-				/* decide to deliver this pakage*/
-				nextStates.add(newDeliver(task, state));
-				break;
-			}
+		if(currentDelivery != null) {
+				for(Task task : currentDelivery) {
+					if(!state.deliveredTasks.contains(task.id) && state.carriedTasks.contains(task.id))
+					/* decide to deliver this pakage*/
+					nextStates.add(newDeliver(task, state));
+					break;
+				}
 		}
+		
 		
 		for(City neighbor : state.currentCity.neighbors()) {
 			nextStates.add(newMove(neighbor, state));
@@ -201,6 +200,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	
 	State newDeliver (Task task, State state) {
+		System.out.println("delivery");
 		State returnState = copyState(state);
 		returnState.plan.appendDelivery(task);
 		returnState.carriedTasks.remove(task.id);
