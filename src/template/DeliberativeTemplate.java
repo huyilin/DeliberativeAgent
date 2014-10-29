@@ -37,11 +37,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	/* the properties of the agent */
 	Agent agent;
 	int capacity;
-	TaskSet carriedTasks;
+//	TaskSet carriedTasks;
 	/* the planning class */
 	Algorithm algorithm;
-	HashMap<City, HashSet<Task>> pickupMap = new HashMap<City, HashSet<Task>> ();
-	HashMap<City, HashSet<Task>> deliveryMap = new HashMap<City, HashSet<Task>> ();
+	HashMap<City, HashSet<Task>> pickupMap;
+	HashMap<City, HashSet<Task>> deliveryMap;
 	City InitialCity;
 	Vehicle vehicle;
 	
@@ -51,7 +51,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
-		this.carriedTasks = null;
 		this.cityNum = topology.cities().size();
 	
 		// initialize the planner
@@ -99,6 +98,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		stateQueue.add(initalState);
 		State optimalState = null;
 		boolean firstHit = false;
+		this.pickupMap = new HashMap<City, HashSet<Task>> ();
+		this.deliveryMap = new HashMap<City, HashSet<Task>> ();
 		
 		for(City city : topology.cities()) {
 			pickupMap.put(city, new HashSet<Task>());
@@ -110,10 +111,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			deliveryMap.get(task.deliveryCity).add(task);
 		}
 		
+		for(Task task : vehicle.getCurrentTasks()) {
+			deliveryMap.get(task.deliveryCity).add(task);
+		}
+		
 		while (!stateQueue.isEmpty()) {
 			State state = stateQueue.remove();
 			
-			if (state.deliveredTasks.size() == tasks.size()) {
+			if (state.deliveredTasks.size() == tasks.size() + vehicle.getCurrentTasks().size()) {
 				if (!firstHit) {
 					optimalState = state;
 					firstHit = true;
@@ -159,8 +164,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		state.currentCity = vehicle.getCurrentCity();
 		state.capacity = vehicle.capacity();
 		state.cost = 0;
-		if(this.carriedTasks != null) {
-			for(Task task : this.carriedTasks) {
+		if(vehicle.getCurrentTasks() != null) {
+			for(Task task : vehicle.getCurrentTasks()) {
 				state.carriedTasks.add(task.id);
 			}
 		}
@@ -277,7 +282,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	@Override
 	public void planCancelled(TaskSet carriedTasks) {
 		if (!carriedTasks.isEmpty()) {
-			this.carriedTasks = carriedTasks;
 			// This cannot happen for this simple agent, but typically
 			// you will need to consider the carriedTasks when the next
 			// plan is computed.
