@@ -80,7 +80,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			break;
 		default:
 			throw new AssertionError("Should not happen.");
-		}		
+		}
 		return plan;
 	}
 	
@@ -99,6 +99,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		stateQueue.add(initalState);
 		State optimalState = null;
 		boolean firstHit = false;
+		
 		
 		for(City city : topology.cities()) {
 			pickupMap.put(city, new HashSet<Task>());
