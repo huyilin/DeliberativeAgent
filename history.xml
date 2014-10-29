@@ -5,6 +5,7 @@
 		<agent name="deliberative-random">
 			<vehicle name="Vehicle 1"/>
 		</agent>
+<<<<<<< HEAD
 	</agents>
 	<rounds>
 		<round id="1">
@@ -37,3 +38,7 @@
 		</stat>
 	</statistics>
 </history>
+=======
+		<agent name="deliberative-random">
+			<vehicle name="Vehicle 2"/>
+>>>>>>> 5ca0dba2b8ee54d9a051cc3223d83fa74e07f865
