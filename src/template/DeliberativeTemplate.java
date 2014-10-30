@@ -62,7 +62,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
-		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
+		String algorithmName = agent.readProperty("algorithm", String.class, "BFS");
 		
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
@@ -128,7 +128,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			for(City city : this.topology.cities()) {
 				cityMap.put(city.id, city);
 			}
-			
 			this.crashed = true;
 		} else {
 			this.taskMap = new HashMap<Integer, Task> ();
