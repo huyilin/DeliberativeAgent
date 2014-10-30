@@ -468,11 +468,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
             }
         }
         
-        if(max1Cost >= max2Cost) {
-        	return max1Cost;
-        } else {
-        	return max2Cost;
-        }
+        return max1Cost + max2Cost;
+//        if(max1Cost >= max2Cost) {
+//        	return max1Cost;
+//        } else {
+//        	return max2Cost;
+//        }
     }
     
     public State findMinCost(ArrayList<State> list, TaskSet tasks){    // find the min overall cost in the openList
@@ -483,7 +484,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         double minCost = 0;
         boolean sign = true;
         
-        while(itr.hasNext()){
+        while(itr.hasNext()) {
             s = itr.next();
             if (sign) {                   // set the first state to be the reference state
                 minCost = s.cost + hrCost(s, tasks);
