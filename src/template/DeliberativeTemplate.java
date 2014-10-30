@@ -57,7 +57,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		this.agent = agent;
 		this.cityNum = topology.cities().size();
 		
-		boolean [] a = new boolean[20];
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
 		String algorithmName = agent.readProperty("algorithm", String.class, "BFS");
@@ -84,7 +83,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			break;
 		default:
 			throw new AssertionError("Should not happen.");
-		}
+		}		
 		return plan;
 	}
 	
@@ -102,28 +101,47 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		State optimalState = null;
 		boolean firstHit = false;
 		
-<<<<<<< HEAD
-=======
 		this.pickupMap = new HashMap<City, HashSet<Task>> ();
 		this.deliveryMap = new HashMap<City, HashSet<Task>> ();
 		
 		if(!this.crashed) {
-			this.taskNum = tasks.size();
-			this.doubleTaskNum = 2*taskNum;
+			this.taskNum = tasks.size() + vehicle.getCurrentTasks().size();
+			
 			for(Task task : tasks) {
+				if(task.id + 1 > this.taskNum) {
+					this.taskNum = task.id + 1;
+				}
 				taskMap.put(task.id, task);
 			}
+			
+			for(Task task : vehicle.getCurrentTasks()) {
+				if(task.id + 1 > this.taskNum) {
+					this.taskNum = task.id + 1;
+				}
+				taskMap.put(task.id, task);
+			}
+			
+			this.doubleTaskNum = 2*taskNum;
 			
 			for(City city : this.topology.cities()) {
 				cityMap.put(city.id, city);
 			}
 			
 			this.crashed = true;
+		} else {
+			this.taskMap = new HashMap<Integer, Task> ();
+			
+			for(Task task : tasks) {
+				taskMap.put(task.id, task);
+			}
+			
+			for(Task task : vehicle.getCurrentTasks()) {
+				taskMap.put(task.id, task);
+			}
 		}
 		
 		State initalState = initiateState(vehicle, tasks, plan);
 		stateQueue.add(initalState);
->>>>>>> 5ca0dba2b8ee54d9a051cc3223d83fa74e07f865
 		
 		for(City city : topology.cities()) {
 			pickupMap.put(city, new HashSet<Task>());
@@ -152,9 +170,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			} else {
 				for (State nextState: this.nextStates(state)) {
 					if (!firstHit  || state.cost < optimalState.cost) {
-//						if (!hasCircle(nextState)) {
 							stateQueue.add(nextState);
-//						}
 					}
 				}
 			}
@@ -163,26 +179,26 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		System.out.println("Return Optimal");
 		System.out.println(optimalState.cost);
 		Plan optimalPlan = computePlan(optimalState.plan);
-		System.out.print(optimalPlan);
+		System.out.println(optimalPlan);
 		return optimalPlan;
 	}
 	
 	private boolean goalTest(boolean[] deliveredTasks) {
-		for(boolean task :  deliveredTasks) {
-			if(!task) return false;
+		for(Integer taskID : taskMap.keySet()) {
+			if(!deliveredTasks[taskID]) return false;
 		}
 		return true;
 	}
 	
-	private Plan computePlan(int[] plan) {
-		Plan returnPlan = new Plan(cityMap.get(plan[0]));
+	private Plan computePlan(byte[] plan) {
+		Plan returnPlan = new Plan(cityMap.get(new Integer(plan[0])));
 		for(int i = 1 ; i < plan.length; i ++) {
 			if(plan[i]/taskNum == 0) {
-				returnPlan.appendPickup(taskMap.get(plan[i]));
+				returnPlan.appendPickup(taskMap.get(new Integer(plan[i])));
 			} else if(plan[i]/taskNum == 1) {
-				returnPlan.appendDelivery(taskMap.get(plan[i] - taskNum));
+				returnPlan.appendDelivery(taskMap.get(new Integer(plan[i]) - taskNum));
 			} else if(plan[i]/taskNum > 1) {
-				returnPlan.appendMove(cityMap.get(plan[i] - doubleTaskNum));
+				returnPlan.appendMove(cityMap.get(new Integer(plan[i]) - doubleTaskNum));
 			}
 		}
 		return returnPlan;
@@ -190,9 +206,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	private State initiateState (Vehicle vehicle, TaskSet tasks, Plan plan) {
 		State state = new State();
-		state.plan = new int[1];
-		state.currentCity = vehicle.getCurrentCity();
-		state.plan[0] = state.currentCity.id;
+		state.plan = new byte[1];
+		state.currentCity = (byte) vehicle.getCurrentCity().id;
+		state.plan[0] = (byte) state.currentCity;
 		state.capacity = vehicle.capacity();
 		state.cost = 0;
 		state.carriedTasks = new boolean[this.taskNum];
@@ -202,7 +218,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				state.carriedTasks[task.id] = true;
 			}
 		}
-		System.out.println(this.taskNum);
 //		state.pathControl.add(InitialCity.id);
 		return state;
 	}
@@ -212,7 +227,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		HashSet<State> nextStates = new HashSet<State> ();
 		
 		/* To record how many packages to delivery, with their destination*/
-		HashSet<Task> currentDelivery = deliveryMap.get(state.currentCity);
+		HashSet<Task> currentDelivery = deliveryMap.get(cityMap.get(new Integer(state.currentCity)));
 		for(Task task : currentDelivery) {
 			if(!state.deliveredTasks[task.id] && state.carriedTasks[task.id]) {
 			/* decide to deliver this package*/
@@ -228,7 +243,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			HashSet<Task> cityTasks = pickupMap.get(city);
 			HashSet<Task> cityDelivery = deliveryMap.get(city);
 			
-			if(state.currentCity.id != city.id) {
+			if(state.currentCity != city.id) {
 				for(Task task : cityDelivery) {
 					if(!state.deliveredTasks[task.id] && state.carriedTasks[task.id]) {
 						/* decide to deliver this package*/
@@ -252,7 +267,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	State newTake(Task task, State state) {
 		State returnState = copyState(state);
-		returnState.plan[returnState.plan.length -1] = task.id;
+		returnState.plan[returnState.plan.length -1] = (byte) task.id;
 		returnState.carriedTasks[task.id] = true;
 		returnState.capacity -= task.weight;
 //		returnState.pathControl.add(cityNum);
@@ -261,7 +276,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	
 	State newDeliver (Task task, State state) {
 		State returnState = copyState(state);
-		returnState.plan[returnState.plan.length -1] = task.id + taskNum;
+		returnState.plan[returnState.plan.length -1] = (byte) (task.id + taskNum);
 		returnState.carriedTasks[task.id] = false;
 		returnState.deliveredTasks[task.id] = true;
 		returnState.capacity += task.weight;
@@ -272,17 +287,17 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	State newMove (City city, State state) {
 		
 		State returnState = copyState(state);
-		returnState.plan = new int[state.plan.length + returnState.currentCity.pathTo(city).size()];
+		returnState.plan = new byte[state.plan.length + cityMap.get(new Integer(returnState.currentCity)).pathTo(city).size()];
 		System.arraycopy(state.plan, 0, returnState.plan, 0, state.plan.length);
 		int index = state.plan.length - 1;
-		for(City paseCity : returnState.currentCity.pathTo(city)) {
-			returnState.plan[index + 1] = paseCity.id + doubleTaskNum;
+		for(City paseCity : cityMap.get(new Integer(returnState.currentCity)).pathTo(city)) {
+			returnState.plan[index + 1] = (byte) (paseCity.id + doubleTaskNum);
 			index ++;
 		}
 		
-		returnState.cost += state.currentCity.distanceUnitsTo(city)*vehicle.costPerKm();
+		returnState.cost += cityMap.get(new Integer(state.currentCity)).distanceUnitsTo(city)*vehicle.costPerKm();
 //		returnState.pathControl.add(city.id);
-		returnState.currentCity = city;
+		returnState.currentCity = (byte) city.id;
 		return returnState;
 	}
 	
@@ -293,7 +308,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		returnState.capacity = state.capacity;
 		returnState.cost = state.cost;
 		returnState.currentCity = state.currentCity;
-		returnState.plan = new int[state.plan.length + 1];
+		returnState.plan = new byte[state.plan.length + 1];
 		System.arraycopy(state.plan, 0, returnState.plan, 0, state.plan.length);
 		
 		returnState.carriedTasks = new boolean[taskNum];
