@@ -460,7 +460,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
             
             // calculate the max cost between not-yet-pickup task and its destination
             if (!state.carriedTasks[task.id] && !state.deliveredTasks[task.id]){
-                temp2Cost = task.pickupCity.distanceTo(task.deliveryCity) * vehicle.costPerKm();
+                temp2Cost = (cityMap.get(new Integer(state.currentCity)).distanceTo(task.pickupCity) + 
+                		task.pickupCity.distanceTo(task.deliveryCity)) * vehicle.costPerKm();
                 if (temp2Cost > max2Cost) {
                     max2Cost = temp2Cost;
                 }
