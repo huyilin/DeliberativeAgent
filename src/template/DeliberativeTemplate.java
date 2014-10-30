@@ -443,7 +443,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
     
     
     public double hrCost(State state, TaskSet tasks){    // heuristic function of cost from current state to goal state
-        double cost = 0;
         double temp1Cost = 0;
         double max1Cost = 0;
         double temp2Cost = 0;
@@ -481,11 +480,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         Iterator<State> itr = list.iterator();
         double totalCost = 0;
         double minCost = 0;
-        int sign = true;
+        boolean sign = true;
         
         while(itr.hasNext()){
             s = itr.next();
-            if (sign){                         // set the first state to be the reference state
+            if (sign) {                   // set the first state to be the reference state
                 minCost = s.cost + hrCost(s, tasks);
                 returnState = s;
             }
@@ -495,7 +494,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
                     returnState = s;
                 }
             }
-            sign = true;
+            sign = false;
         }
         return returnState;
     }
