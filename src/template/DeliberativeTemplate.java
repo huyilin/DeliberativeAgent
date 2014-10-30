@@ -62,7 +62,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
-		String algorithmName = agent.readProperty("algorithm", String.class, "BFS");
+		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
 		
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
@@ -78,7 +78,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		switch (algorithm) {
 		case ASTAR:
 			// ...
-			plan = naivePlan(vehicle, tasks);
+			System.out.println("this is the atartlalala");
+			plan = astarPlan(vehicle, tasks);
 			break;
 		case BFS:
 			// ...
@@ -88,10 +89,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			throw new AssertionError("Should not happen.");
 		}		
 		return plan;
-	}
-	
-	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
-		return null;
 	}
 	
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
@@ -324,27 +321,75 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 	
     private Plan astarPlan(Vehicle vehicle, TaskSet tasks) {
-        
-        City current = vehicle.getCurrentCity();
-        Plan plan = new Plan(current);
-        this.InitialCity = current;
-        this.vehicle = vehicle;
-        State initalState = initiateState(vehicle, tasks, plan);
-        State optimalState = null;
+    	System.out.println("this is the astar algorithm");
+    	Queue<State> stateQueue = new LinkedList<State> ();
+		City current = vehicle.getCurrentCity();
+		Plan plan = new Plan(current);
+		this.vehicle = vehicle;
+		
+		State optimalState = null;
+		boolean firstHit = false;
+		
+		this.pickupMap = new HashMap<City, HashSet<Task>> ();
+		this.deliveryMap = new HashMap<City, HashSet<Task>> ();
+		
+		if(!this.crashed) {
+			this.taskNum = tasks.size() + vehicle.getCurrentTasks().size();
+			
+			for(Task task : tasks) {
+				if(task.id + 1 > this.taskNum) {
+					this.taskNum = task.id + 1;
+				}
+				taskMap.put(task.id, task);
+			}
+			
+			for(Task task : vehicle.getCurrentTasks()) {
+				if(task.id + 1 > this.taskNum) {
+					this.taskNum = task.id + 1;
+				}
+				taskMap.put(task.id, task);
+			}
+			
+			this.doubleTaskNum = 2*taskNum;
+			
+			for(City city : this.topology.cities()) {
+				cityMap.put(city.id, city);
+			}
+			
+			this.crashed = true;
+		} else {
+			this.taskMap = new HashMap<Integer, Task> ();
+			
+			for(Task task : tasks) {
+				taskMap.put(task.id, task);
+			}
+			
+			for(Task task : vehicle.getCurrentTasks()) {
+				taskMap.put(task.id, task);
+			}
+		}
+		
+		State initalState = initiateState(vehicle, tasks, plan);
+		
+		for(City city : topology.cities()) {
+			pickupMap.put(city, new HashSet<Task>());
+			deliveryMap.put(city, new HashSet<Task> ());
+		}
+		
+		for(Task task : tasks) {
+			pickupMap.get(task.pickupCity).add(task);
+			deliveryMap.get(task.deliveryCity).add(task);
+		}
+		
+		for(Task task : vehicle.getCurrentTasks()) {
+			deliveryMap.get(task.deliveryCity).add(task);
+		}
+		
+		
         double temp = 0;
         int index = 0;
         
         openList.add(initalState);
-        
-        for(City city : topology.cities()) {
-            pickupMap.put(city, new HashSet<Task>());
-            deliveryMap.put(city, new HashSet<Task> ());
-        }
-        
-        for(Task task : tasks) {
-            pickupMap.get(task.pickupCity).add(task);
-            deliveryMap.get(task.deliveryCity).add(task);
-        }
         
         while(!openList.isEmpty()){
             State state = findMinCost(openList, tasks);     // pick the first element of the open list
@@ -352,7 +397,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
             openList.remove(state);                           // remove the explored state from openList to closeList               
             closeList.add(state);  
 
-            if (state.deliveredTasks.size() == tasks.size()) {                            // current state is the goal state
+            if (goalTest(state.deliveredTasks)) {                            // current state is the goal state
                     optimalState = state;
                     break;
             } 
@@ -405,15 +450,15 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         
         for(Task task : tasks) {
             // calculate the max cost between carriedTask'current city to its destination
-            if( state.carriedTasks.contains(task)){                                     
-                temp1Cost = state.currentCity.distanceTo(task.deliveryCity) * vehicle.costPerKm() ;
+            if( state.carriedTasks[task.id]){                                   
+                temp1Cost = cityMap.get(new Integer(state.currentCity)).distanceTo(task.deliveryCity) * vehicle.costPerKm() ;
                 if ( temp1Cost > max1Cost){
                     max1Cost = temp1Cost;
                 }
             }
             
             // calculate the max cost between not-yet-pickup task and its destination
-            if (!state.carriedTasks.contains(task) && !state.deliveredTasks.contains(task)){
+            if (!state.carriedTasks[task.id] && !state.deliveredTasks[task.id]){
                 temp2Cost = task.pickupCity.distanceTo(task.deliveryCity) * vehicle.costPerKm();
                 if (temp2Cost > max2Cost){
                     max2Cost = temp2Cost;
@@ -421,7 +466,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
             } 
         }
         //cost = (totalTask - state.deliveredTasks.size()) * 2000000;
-                
         return (max1Cost > max2Cost ? max1Cost : max2Cost);
     }
     
@@ -440,7 +484,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
                 minCost = s.cost + hrCost(s, tasks);
                 returnState = s;
             }
-            else{                                                     // check the rest states
+            else{                                        // check the rest states
                 if ( (s.cost + hrCost(s, tasks)) < minCost){     // ongoing state has smaller cost than minCost
                     minCost = s.cost + hrCost(s, tasks);         // set the minCost to be the cost of ongoing state
                     returnState = s;
