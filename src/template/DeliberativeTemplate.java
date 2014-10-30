@@ -49,6 +49,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	HashMap<Integer, Task> taskMap = new HashMap<Integer, Task> ();
 	HashMap<Integer, City> cityMap = new HashMap<Integer, City> ();
 	
+	ArrayList<State> openList = new ArrayList<State>();
+    ArrayList<State> closeList = new ArrayList<State>();
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 		
@@ -319,6 +322,135 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		return returnState;
 	}
+	
+    private Plan astarPlan(Vehicle vehicle, TaskSet tasks) {
+        
+        City current = vehicle.getCurrentCity();
+        Plan plan = new Plan(current);
+        this.InitialCity = current;
+        this.vehicle = vehicle;
+        State initalState = initiateState(vehicle, tasks, plan);
+        State optimalState = null;
+        double temp = 0;
+        int index = 0;
+        
+        openList.add(initalState);
+        
+        for(City city : topology.cities()) {
+            pickupMap.put(city, new HashSet<Task>());
+            deliveryMap.put(city, new HashSet<Task> ());
+        }
+        
+        for(Task task : tasks) {
+            pickupMap.get(task.pickupCity).add(task);
+            deliveryMap.get(task.deliveryCity).add(task);
+        }
+        
+        while(!openList.isEmpty()){
+            State state = findMinCost(openList, tasks);     // pick the first element of the open list
+            
+            openList.remove(state);                           // remove the explored state from openList to closeList               
+            closeList.add(state);  
+
+            if (state.deliveredTasks.size() == tasks.size()) {                            // current state is the goal state
+                    optimalState = state;
+                    break;
+            } 
+            /*else {                                // current state is not the goal state
+                index = 0;
+                for (State nextState: this.nextStates(state)) {              // explore the neighbors
+                    
+                    if (closeList.contains(nextState)){        // no need to explore state which has been in closeList
+                        continue;
+                    }
+                    if (index == 0){            // set the first next state as min cost
+                        temp = nextState.cost + hrCost(nextState, tasks.size());
+                        optimalState = nextState;
+                        openList.add(nextState);
+                    }
+                    else{            
+                        if ((nextState.cost + hrCost(nextState, tasks.size())) <= temp){
+                            temp = nextState.cost + hrCost(nextState, tasks.size());
+                            openList.remove(0);                                // remove the former optimal state from the openlist
+                            optimalState = nextState;
+                            openList.add(nextState);                           // add new optimal state into openlist
+                        }
+                    }
+                    index++;
+                }
+            }    */
+            else{                                                            // current state is not the goal state
+                for (State nextState : this.nextStates(state)){                // add current state's nextstate to the openlist
+                    if (!closeList.contains(nextState)){        // no need to explore state which has been in closeList
+                        openList.add(nextState);
+                    }                    
+                }
+                //optimalState = findMinCost(openList, tasks.size());
+            }
+        }
+        System.out.println("Return Optimal");
+        System.out.println(optimalState.cost);
+        System.out.println(optimalState.plan);
+        return null;
+    }
+    
+    
+    public double hrCost(State state, TaskSet tasks){    // heuristic function of cost from current state to goal state
+        double cost = 0;
+        double temp1Cost = 0;
+        double max1Cost = 0;
+        double temp2Cost = 0;
+        double max2Cost = 0;
+        
+        
+        for(Task task : tasks) {
+            // calculate the max cost between carriedTask'current city to its destination
+            if( state.carriedTasks.contains(task)){                                     
+                temp1Cost = state.currentCity.distanceTo(task.deliveryCity) * vehicle.costPerKm() ;
+                if ( temp1Cost > max1Cost){
+                    max1Cost = temp1Cost;
+                }
+            }
+            
+            // calculate the max cost between not-yet-pickup task and its destination
+            if (!state.carriedTasks.contains(task) && !state.deliveredTasks.contains(task)){
+                temp2Cost = task.pickupCity.distanceTo(task.deliveryCity) * vehicle.costPerKm();
+                if (temp2Cost > max2Cost){
+                    max2Cost = temp2Cost;
+                }
+            } 
+        }
+        //cost = (totalTask - state.deliveredTasks.size()) * 2000000;
+                
+        return (max1Cost > max2Cost ? max1Cost : max2Cost);
+    }
+    
+    public State findMinCost(ArrayList<State> list, TaskSet tasks){    // find the min overall cost in the openList
+        State s = null;
+        State returnState = null;
+        Iterator<State> itr = list.iterator();
+        double totalCost = 0;
+        double minCost = 0;
+        int index = 0;
+        
+        while(itr.hasNext()){
+            s = itr.next();
+            index = 0;
+            if (index == 0){                                          // set the first state to be the reference state
+                minCost = s.cost + hrCost(s, tasks);
+                returnState = s;
+            }
+            else{                                                     // check the rest states
+                if ( (s.cost + hrCost(s, tasks)) < minCost){     // ongoing state has smaller cost than minCost
+                    minCost = s.cost + hrCost(s, tasks);         // set the minCost to be the cost of ongoing state
+                    returnState = s;
+                }
+            }
+            index++;
+        }
+        return returnState;
+    }
+
 	
 	@Override
 	public void planCancelled(TaskSet carriedTasks) {
