@@ -10,6 +10,7 @@ public class State {
 	public boolean[] carriedTasks;
 	public boolean[] deliveredTasks;
 	public byte[] plan;
+	long f;
 	
 //	public HashSet<Integer> deliveredTasks = new HashSet<Integer> ();
 	
