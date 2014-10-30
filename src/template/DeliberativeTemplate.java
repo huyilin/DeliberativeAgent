@@ -393,10 +393,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         openList.add(initalState);
         
         while(!openList.isEmpty()){
+        	
             State state = findMinCost(openList, tasks);     // pick the first element of the open list
-            
-            openList.remove(state);                           // remove the explored state from openList to closeList               
-            closeList.add(state);  
+            openList.remove(state);                     // remove the explored state from openList to closeList               
+            closeList.add(state);
 
             if (goalTest(state.deliveredTasks)) {                            // current state is the goal state
                     optimalState = state;
@@ -429,7 +429,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
                 for (State nextState : this.nextStates(state)){                // add current state's nextstate to the openlist
                     if (!closeList.contains(nextState)){        // no need to explore state which has been in closeList
                         openList.add(nextState);
-                    }                    
+                    }      
                 }
                 //optimalState = findMinCost(openList, tasks.size());
             }
@@ -462,13 +462,17 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
             // calculate the max cost between not-yet-pickup task and its destination
             if (!state.carriedTasks[task.id] && !state.deliveredTasks[task.id]){
                 temp2Cost = task.pickupCity.distanceTo(task.deliveryCity) * vehicle.costPerKm();
-                if (temp2Cost > max2Cost){
+                if (temp2Cost > max2Cost) {
                     max2Cost = temp2Cost;
                 }
-            } 
+            }
         }
-        //cost = (totalTask - state.deliveredTasks.size()) * 2000000;
-        return (max1Cost > max2Cost ? max1Cost : max2Cost);
+        
+        if(max1Cost >= max2Cost) {
+        	return max1Cost;
+        } else {
+        	return max2Cost;
+        }
     }
     
     public State findMinCost(ArrayList<State> list, TaskSet tasks){    // find the min overall cost in the openList
@@ -477,12 +481,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         Iterator<State> itr = list.iterator();
         double totalCost = 0;
         double minCost = 0;
-        int index = 0;
+        int sign = true;
         
         while(itr.hasNext()){
             s = itr.next();
-            index = 0;
-            if (index == 0){                                          // set the first state to be the reference state
+            if (sign){                         // set the first state to be the reference state
                 minCost = s.cost + hrCost(s, tasks);
                 returnState = s;
             }
@@ -492,7 +495,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
                     returnState = s;
                 }
             }
-            index++;
+            sign = true;
         }
         return returnState;
     }
