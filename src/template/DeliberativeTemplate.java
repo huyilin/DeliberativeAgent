@@ -76,12 +76,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		Plan plan;
 		// Compute the plan with the selected algorithm.
 		switch (algorithm) {
+		
 		case ASTAR:
 			// ...
-			System.out.println("this is the atartlalala");
+			System.out.println("this is the Astar Algorithm");
 			plan = astarPlan(vehicle, tasks);
 			break;
 		case BFS:
+			System.out.println("this is the BFS Algorithm");
 			// ...
 			plan = bfsPlan(vehicle, tasks);
 			break;
@@ -321,7 +323,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 	
     private Plan astarPlan(Vehicle vehicle, TaskSet tasks) {
-    	System.out.println("this is the astar algorithm");
     	Queue<State> stateQueue = new LinkedList<State> ();
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
@@ -435,8 +436,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
         }
         System.out.println("Return Optimal");
         System.out.println(optimalState.cost);
-        System.out.println(optimalState.plan);
-        return null;
+        Plan returnPlan = computePlan(optimalState.plan);
+        System.out.println(returnPlan);
+        return returnPlan;
     }
     
     
